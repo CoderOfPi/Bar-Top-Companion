@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bar Recipes — Staff Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;600&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0b0b;--surface:#130e0e;--card:#1a0f0f;
+    --red:#9b2c2c;--red-light:#c0392b;--red-dim:#5a1a1a;
+    --amber:#b8860b;--amber-dim:rgba(184,134,11,.15);
+    --cream:#f0e8e8;--white-active:#f5f0f0;--muted:#8a6f6f;
+    --border:rgba(155,44,44,.18);--border-bright:rgba(155,44,44,.45);
+    --panel-width:480px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(155,44,44,.07) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 80% 80%,rgba(184,134,11,.04) 0%,transparent 60%);pointer-events:none;z-index:0;}
+  .container{max-width:1100px;margin:0 auto;padding:48px 24px;position:relative;z-index:1;transition:margin-right .35s ease;}
+  .container.panel-open{margin-right:var(--panel-width);}
+
+  .header{text-align:center;margin-bottom:48px;animation:fadeDown .8s ease both;}
+  .header-eyebrow{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.4em;color:var(--red-dim);text-transform:uppercase;margin-bottom:16px;}
+  .header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.8rem,6vw,4.5rem);font-weight:300;color:var(--white-active);letter-spacing:.05em;line-height:1;}
+  .header-rule{display:flex;align-items:center;gap:16px;margin:20px auto 0;max-width:300px;}
+  .header-rule::before,.header-rule::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--red-dim));}
+  .header-rule::after{background:linear-gradient(to left,transparent,var(--red-dim));}
+  .header-rule span{color:var(--red);font-size:18px;}
+
+  .edit-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:16px;}
+  .edit-toggle{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;padding:10px 20px;border-radius:4px;cursor:pointer;transition:all .25s;border:1px solid var(--border);background:transparent;color:var(--muted);}
+  .edit-toggle:hover{color:var(--cream);border-color:var(--border-bright);}
+  .edit-toggle.active{background:var(--red-dim);color:var(--white-active);border-color:var(--red);box-shadow:0 0 12px rgba(155,44,44,.25);}
+  .edit-hint{font-size:11px;color:var(--red-dim);font-style:italic;opacity:0;transition:opacity .3s;}
+  .edit-hint.visible{opacity:1;}
+
+  .tab-nav{display:flex;gap:8px;margin-bottom:40px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;flex-wrap:wrap;}
+  .tab-btn{flex:1;min-width:100px;padding:12px 16px;background:transparent;border:1px solid transparent;color:var(--muted);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;cursor:pointer;border-radius:4px;transition:all .25s;white-space:nowrap;}
+  .tab-btn:hover{color:var(--cream);background:rgba(155,44,44,.08);border-color:var(--border);}
+  .tab-btn.active{background:var(--red-dim);color:var(--white-active);border:1px solid var(--red);box-shadow:0 0 12px rgba(155,44,44,.25),inset 0 1px 0 rgba(255,255,255,.06);font-weight:600;letter-spacing:.18em;}
+
+  .section{display:none;animation:fadeUp .4s ease both;}
+  .section.active{display:block;}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;font-style:italic;color:#c47878;letter-spacing:.1em;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+
+  .search-bar{position:relative;margin-bottom:24px;}
+  .search-bar input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px 16px 12px 42px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;}
+  .search-bar input:focus{border-color:var(--red);}
+  .search-bar input::placeholder{color:var(--muted);}
+  .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none;}
+
+  .recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:40px;}
+
+  .recipe-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:22px 24px;transition:border-color .25s,transform .2s;position:relative;overflow:hidden;cursor:pointer;}
+  .recipe-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0;background:linear-gradient(to bottom,var(--amber),var(--red-dim));transition:height .3s;}
+  body:not(.edit-mode) .recipe-card:hover{border-color:var(--border-bright);transform:translateY(-2px);}
+  body:not(.edit-mode) .recipe-card:hover::before{height:100%;}
+  .recipe-card.active-card{border-color:var(--red);background:#200e0e;}
+  .recipe-card.active-card::before{height:100%;}
+  .recipe-card.featured{border-color:rgba(184,134,11,.35);background:linear-gradient(135deg,#1a0f0f,#1c1108);}
+  body.edit-mode .recipe-card{cursor:default;}
+
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;}
+  .card-name{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--cream);line-height:1.2;}
+  .card-price{font-family:'Cinzel',serif;font-size:.85rem;color:var(--white-active);white-space:nowrap;padding-top:3px;}
+  .card-meta{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .meta-tag{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.15em;padding:3px 8px;border-radius:2px;text-transform:uppercase;}
+  .meta-tag.spirit{background:var(--amber-dim);color:#d4a83a;border:1px solid rgba(184,134,11,.25);}
+  .meta-tag.glass{background:rgba(100,140,200,.1);color:#88a8d4;border:1px solid rgba(100,140,200,.2);}
+  .meta-tag.style{background:rgba(155,44,44,.12);color:#c47878;border:1px solid var(--border);}
+  .card-ing-preview{font-size:.78rem;color:var(--white-active);letter-spacing:.03em;line-height:1.6;font-style:italic;}
+  .card-footer{margin-top:10px;font-size:.72rem;color:var(--white-active);padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+  .card-footer-arrow{color:var(--red-dim);font-size:14px;}
+
+  .card-edit-actions{display:none;position:absolute;top:8px;right:8px;gap:6px;z-index:5;}
+  body.edit-mode .card-edit-actions{display:flex;}
+  .btn-edit-card,.btn-del-card{width:28px;height:28px;border-radius:3px;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .btn-edit-card{background:var(--red-dim);color:var(--white-active);border:1px solid var(--red);}
+  .btn-edit-card:hover{background:var(--red);}
+  .btn-del-card{background:rgba(80,10,10,.8);color:#e08080;border:1px solid rgba(180,60,60,.4);}
+  .btn-del-card:hover{background:rgba(150,30,30,.9);color:#fff;}
+
+  .add-card-btn{display:none;background:transparent;border:1px dashed var(--red-dim);border-radius:4px;padding:20px;color:var(--red-dim);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;cursor:pointer;transition:all .25s;align-items:center;justify-content:center;gap:8px;min-height:80px;}
+  body.edit-mode .add-card-btn{display:flex;}
+  .add-card-btn:hover{border-color:var(--red);color:var(--red);background:rgba(155,44,44,.05);}
+
+  .qr-section-heading{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;margin:32px 0 14px;}
+  .qr-section-heading:first-child{margin-top:0;}
+  .qr-group-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.3em;color:var(--red);text-transform:uppercase;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:4px;}
+  .qr-item{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;transition:border-color .2s;}
+  .qr-item:hover{border-color:var(--border-bright);}
+  .qr-name{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--cream);}
+  .qr-price{font-family:'Cinzel',serif;font-size:.8rem;color:var(--white-active);}
+  .no-results{grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-style:italic;font-size:.9rem;}
+
+  /* PANEL */
+  .panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .panel-overlay.visible{opacity:1;pointer-events:all;}
+  .slide-panel{position:fixed;top:0;right:0;height:100vh;width:var(--panel-width);max-width:95vw;background:#160b0b;border-left:1px solid var(--border-bright);z-index:100;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;}
+  .slide-panel.open{transform:translateX(0);}
+  @media(max-width:600px){:root{--panel-width:100vw;}.slide-panel{width:100vw;max-width:100vw;height:100dvh;border-left:none;}.container.panel-open{margin-right:0;}}
+  .panel-close{position:absolute;top:16px;right:16px;background:var(--red-dim);border:1px solid var(--red);color:var(--white-active);width:36px;height:36px;border-radius:3px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:10;}
+  .panel-close:hover{background:var(--red);}
+  .panel-hero{width:100%;padding:28px 28px 22px;flex-shrink:0;background:linear-gradient(180deg,#1f0d0d,#160b0b);border-bottom:1px solid var(--border);}
+  .panel-category{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.35em;color:var(--red);text-transform:uppercase;margin-bottom:8px;}
+  .panel-name{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:300;color:var(--white-active);line-height:1.1;margin-bottom:6px;padding-right:48px;}
+  .panel-price{font-family:'Cinzel',serif;font-size:.95rem;color:var(--amber);margin-bottom:16px;}
+  .panel-tags{display:flex;gap:8px;flex-wrap:wrap;}
+  .panel-body{flex:1;overflow-y:auto;padding:24px 28px 48px;}
+  .panel-body::-webkit-scrollbar{width:4px;}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--red-dim);border-radius:2px;}
+  .panel-divider{height:1px;background:var(--border);margin:22px 0;}
+  .panel-section-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.3em;color:var(--red-dim);text-transform:uppercase;margin-bottom:12px;}
+  .panel-ingredients{display:flex;flex-wrap:wrap;gap:8px;}
+  .ingredient-tag{font-size:.78rem;color:var(--cream);background:rgba(155,44,44,.08);border:1px solid var(--border);padding:6px 12px;border-radius:2px;}
+  .ingredient-tag .amt{display:block;font-family:'Cinzel',serif;font-size:.65rem;color:var(--amber);margin-bottom:2px;}
+  .build-steps{display:flex;flex-direction:column;gap:12px;}
+  .build-step{display:flex;gap:14px;align-items:flex-start;}
+  .step-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--red-dim);border:1px solid var(--red);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:9px;color:var(--white-active);margin-top:1px;}
+  .step-text{font-size:.87rem;color:var(--white-active);line-height:1.7;}
+  .panel-detail-row{display:flex;gap:16px;flex-wrap:wrap;}
+  .panel-detail-item{flex:1;min-width:110px;}
+  .det-label{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.25em;color:var(--red-dim);text-transform:uppercase;margin-bottom:4px;}
+  .det-value{font-size:.83rem;color:var(--cream);}
+  .panel-notes{font-size:.83rem;color:var(--white-active);line-height:1.7;background:rgba(155,44,44,.04);border:1px solid var(--border);border-radius:3px;padding:14px 16px;}
+  .panel-notes.has-note{color:var(--white-active);font-style:normal;}
+
+  /* PIN */
+  .pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+  .pin-overlay.open{display:flex;}
+  .pin-box{background:#1a0e0e;border:1px solid var(--border-bright);border-radius:6px;padding:36px 32px;width:100%;max-width:340px;text-align:center;}
+  .pin-box h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:var(--white-active);margin-bottom:6px;}
+  .pin-box p{font-size:.8rem;color:var(--muted);margin-bottom:24px;font-style:italic;}
+  .pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:24px;}
+  .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--red-dim);background:transparent;transition:all .15s;}
+  .pin-dot.filled{background:var(--red);border-color:var(--red);}
+  .pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .pin-key{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:14px 0;font-family:'Cinzel',serif;font-size:1rem;color:var(--cream);cursor:pointer;transition:all .15s;user-select:none;}
+  .pin-key:hover{background:var(--red-dim);border-color:var(--red);}
+  .pin-key:active{transform:scale(.95);}
+  .pin-key.wide{grid-column:span 2;}
+  .pin-error{font-size:.78rem;color:var(--red-light);margin-top:12px;min-height:18px;font-family:'Cinzel',serif;letter-spacing:.1em;}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+  .modal-bg.open{display:flex;}
+  .modal{background:#1a0e0e;border:1px solid var(--border-bright);border-radius:6px;width:100%;max-width:620px;padding:32px;margin:auto;}
+  .modal h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:var(--white-active);margin-bottom:24px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{margin-bottom:16px;}
+  .form-group label{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.25em;color:var(--red-dim);text-transform:uppercase;margin-bottom:6px;}
+  .form-group input,.form-group textarea,.form-group select{width:100%;background:#0f0808;border:1px solid var(--border);border-radius:3px;padding:10px 12px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s;resize:vertical;}
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--red);}
+  .form-group textarea{min-height:72px;}
+  .form-hint{font-size:.7rem;color:var(--muted);font-style:italic;margin-top:4px;}
+  .modal-section-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.25em;color:var(--amber);text-transform:uppercase;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .steps-editor{display:flex;flex-direction:column;gap:8px;}
+  .step-editor-row{display:flex;gap:8px;align-items:flex-start;}
+  .step-num-badge{flex-shrink:0;width:26px;height:36px;background:var(--red-dim);border:1px solid var(--red);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:9px;color:var(--white-active);}
+  .step-editor-row input{flex:1;}
+  .btn-del-step{width:30px;height:36px;background:rgba(80,10,10,.8);color:#e08080;border:1px solid rgba(180,60,60,.4);border-radius:3px;cursor:pointer;font-size:14px;flex-shrink:0;transition:all .2s;}
+  .btn-del-step:hover{background:rgba(150,30,30,.9);color:#fff;}
+  .btn-add-step{margin-top:6px;background:transparent;border:1px dashed var(--red-dim);color:var(--red-dim);padding:8px 16px;border-radius:3px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.2em;cursor:pointer;transition:all .25s;}
+  .btn-add-step:hover{border-color:var(--red);color:var(--red);}
+  .modal-actions{display:flex;gap:10px;margin-top:24px;justify-content:flex-end;}
+  .btn-save{background:var(--red-dim);color:var(--white-active);border:1px solid var(--red);padding:10px 24px;border-radius:3px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;cursor:pointer;transition:background .2s;}
+  .btn-save:hover{background:var(--red);}
+  .btn-cancel{background:transparent;color:var(--muted);border:1px solid var(--border);padding:10px 20px;border-radius:3px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;cursor:pointer;transition:all .2s;}
+  .btn-cancel:hover{color:var(--cream);border-color:var(--border-bright);}
+
+  .export-bar{display:none;position:sticky;bottom:24px;z-index:50;justify-content:center;margin-top:24px;}
+  body.edit-mode .export-bar{display:flex;}
+  .btn-export{background:var(--red);color:var(--white-active);border:none;padding:14px 36px;border-radius:4px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.2em;cursor:pointer;box-shadow:0 4px 24px rgba(155,44,44,.4);transition:all .25s;}
+  .btn-export:hover{background:var(--red-light);box-shadow:0 6px 32px rgba(155,44,44,.6);transform:translateY(-1px);}
+
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--red-dim);border-radius:3px}
+  @media(max-width:600px){.form-row{grid-template-columns:1fr}.recipe-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
+
+<div class="slide-panel" id="slidePanel">
+  <button class="panel-close" onclick="closePanel()">&#x2715;</button>
+  <div class="panel-hero">
+    <div class="panel-category" id="panelCategory"></div>
+    <div class="panel-name" id="panelName"></div>
+    <div class="panel-price" id="panelPrice"></div>
+    <div class="panel-tags" id="panelTags"></div>
+  </div>
+  <div class="panel-body">
+    <div class="panel-section-label">Ingredients</div>
+    <div class="panel-ingredients" id="panelIngredients"></div>
+    <div class="panel-divider"></div>
+    <div class="panel-section-label">Build Steps</div>
+    <div class="build-steps" id="panelSteps"></div>
+    <div class="panel-divider"></div>
+    <div class="panel-detail-row">
+      <div class="panel-detail-item"><div class="det-label">Glass</div><div class="det-value" id="panelGlass"></div></div>
+      <div class="panel-detail-item"><div class="det-label">Garnish</div><div class="det-value" id="panelGarnish"></div></div>
+      <div class="panel-detail-item"><div class="det-label">Ice</div><div class="det-value" id="panelIce"></div></div>
+    </div>
+    <div class="panel-divider"></div>
+    <div class="panel-section-label">Staff Notes</div>
+    <div class="panel-notes" id="panelNotes"></div>
+  </div>
+</div>
+
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <h2>Edit Mode</h2>
+    <p>Enter your PIN to continue</p>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-numpad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinClear()">&#x232B;</button>
+      <button class="pin-key wide" onclick="pinPress('0')">0</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <h2 id="modalTitle">Add Recipe</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Drink Name</label><input id="fName" type="text" placeholder="e.g. Butterfly Valley"></div>
+      <div class="form-group"><label>Price</label><input id="fPrice" type="text" placeholder="e.g. $15"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Base Spirit</label><input id="fSpirit" type="text" placeholder="e.g. Aged Rum"></div>
+      <div class="form-group"><label>Glass</label><input id="fGlass" type="text" placeholder="e.g. Coupe, Rocks, Highball"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Style / Method</label><input id="fStyle" type="text" placeholder="e.g. Shaken, Stirred, Built"></div>
+      <div class="form-group"><label>Ice</label><input id="fIce" type="text" placeholder="e.g. Large cube, Up, Crushed"></div>
+    </div>
+    <div class="form-group"><label>Garnish</label><input id="fGarnish" type="text" placeholder="e.g. Expressed orange peel, Cherry, None"></div>
+    <div class="form-group">
+      <label>Ingredients</label>
+      <textarea id="fIngredients" placeholder="One per line with amount, e.g.&#10;2 oz Aged Rum&#10;0.75 oz Drambuie&#10;0.5 oz Lime Juice"></textarea>
+      <div class="form-hint">One ingredient per line — include the amount (2 oz, 1 dash, etc.)</div>
+    </div>
+    <div class="modal-section-label">&#x27E1; Build Steps</div>
+    <div class="steps-editor" id="stepsEditor"></div>
+    <button class="btn-add-step" type="button" onclick="addStep()">+ Add Step</button>
+    <div class="form-group" style="margin-top:20px"><label>Staff Notes</label><textarea id="fNotes" placeholder="Allergy info, substitutions, upsell tips, guest FAQs..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Featured?</label>
+        <select id="fFeatured"><option value="">Standard</option><option value="featured">Featured (gold border)</option></select>
+      </div>
+      <div class="form-group"><label>Section</label><select id="fSection"></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" type="button" onclick="saveCard()">Save Recipe</button>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="mainContainer">
+  <div class="header">
+    <div class="header-eyebrow">Staff Reference</div>
+    <h1>Bar Recipes</h1>
+    <div class="header-rule"><span>&#10022;</span></div>
+  </div>
+  <div class="edit-bar">
+    <span class="edit-hint" id="editHint">&#x270E; to edit &middot; &#x1F5D1; to remove &middot; + to add</span>
+    <button class="edit-toggle" id="editToggle" onclick="requestEdit()">&#x270E; Edit</button>
+  </div>
+  <div class="tab-nav" id="tabNav"></div>
+  <div id="sectionsContainer"></div>
+  <div class="export-bar">
+    <button class="btn-export" onclick="exportMenu()">&#x2B07; Save &amp; Download Updated File</button>
+  </div>
+</div>
+
+<script>
+/*DATA_START*/
+let barData = {
+  editPin:"1234",
+  tabs:[
+    {id:"cocktails",label:"Cocktails",subtitle:"Signature Cocktails \u2014 tap any card for the full recipe & build"},
+    {id:"classics",label:"Classics",subtitle:"Classic Builds \u2014 standards every bartender should know cold"},
+    {id:"quickref",label:"Quick Ref",subtitle:"Quick Reference \u2014 all drinks, beers & spirits at a glance",isRef:true}
+  ],
+  recipes:{
+    cocktails:[
+      {name:"Old Fashioned",price:"$14",spirit:"Bourbon",glass:"Rocks",style:"Stirred",ice:"Large cube",garnish:"Expressed orange peel + cherry",featured:false,
+       ingredients:[{amt:"2 oz",item:"Old Grand Dad Bonded Bourbon"},{amt:"1 tsp",item:"Turbinado syrup"},{amt:"2 dash",item:"House bitters"},{amt:"1 dash",item:"Angostura bitters"}],
+       steps:["Add turbinado syrup and both bitters to a mixing glass.","Add bourbon and fill the mixing glass with ice.","Stir 20\u201325 seconds until well chilled and diluted.","Strain over a large cube in a rocks glass.","Express orange peel over the glass, run it around the rim, then drop it in.","Add cherry. Preferred bourbon available on request \u2014 walk the guest through the shelf."],
+       notes:"This drink gets better with more stir time \u2014 don't rush it. If a guest wants a different bourbon, walk them through the selection."},
+      {name:"Cursedly Fashionable",price:"$15",spirit:"Vodka",glass:"Coupe",style:"Shaken",ice:"Up",garnish:"3 espresso beans centered on foam",featured:false,
+       ingredients:[{amt:"1.5 oz",item:"Tito's Vodka"},{amt:"0.75 oz",item:"House Coffee Liqueur"},{amt:"1 shot",item:"Fresh espresso (pulled hot, cooled 30s)"},{amt:"0.5 oz",item:"Licor 43"},{amt:"0.25 oz",item:"Simple syrup (adjust to taste)"}],
+       steps:["Pull one shot of espresso and let it cool 30 seconds \u2014 hot espresso kills the foam.","Combine all ingredients in a shaker with ice.","Dry shake first (no ice) for 5 seconds to start building foam.","Add ice and shake hard for 10\u201312 seconds.","Double strain through fine mesh into a chilled coupe.","Garnish with 3 espresso beans centered on the foam."],
+       notes:"The dry shake is what gets you the foam head \u2014 skip it and guests will notice. If the foam falls flat, your espresso was too hot or too old."},
+      {name:"Butterfly Valley",price:"$15",spirit:"Aged Rum",glass:"Coupe",style:"Shaken",ice:"Up",garnish:"Dehydrated citrus wheel",featured:true,
+       ingredients:[{amt:"1.5 oz",item:"Aged Rum"},{amt:"0.5 oz",item:"Drambuie"},{amt:"0.5 oz",item:"Nanino Aperitivo"},{amt:"0.5 oz",item:"Banana Liqueur"},{amt:"0.75 oz",item:"Lime Juice (fresh)"},{amt:"2 dash",item:"Angostura Bitters"},{amt:"1 pinch",item:"Shawarma Spice (house blend)"}],
+       steps:["Chill a coupe glass.","Add all ingredients to a shaker with ice.","Shake hard for 12 seconds \u2014 this one needs to be cold.","Double strain into the chilled coupe.","Garnish with a dehydrated citrus wheel on the rim."],
+       notes:"The shawarma spice is a house blend \u2014 subtle but it's what makes this unique. Don't overdo it. Sell this as 'complex and tropical with a spiced warmth' \u2014 works for rum lovers and for guests who say they don't like rum."},
+      {name:"Match Point",price:"$14",spirit:"Gin",glass:"Coupe",style:"Shaken",ice:"Up",garnish:"Lemon peel",featured:false,
+       ingredients:[{amt:"1.5 oz",item:"Gin"},{amt:"0.5 oz",item:"Italicus Bergamot Liqueur"},{amt:"0.5 oz",item:"Montenegro Amaro"},{amt:"0.25 oz",item:"Ginger Syrup"},{amt:"0.75 oz",item:"Aquafaba (chickpea water)"},{amt:"2 dash",item:"Cherry Bark Vanilla Bitters"}],
+       steps:["Dry shake all ingredients (no ice) for 8 seconds to emulsify the aquafaba.","Add ice and shake hard for 12 seconds.","Double strain into a chilled coupe.","Express lemon peel over the glass and rest on the rim."],
+       notes:"\u26a0\ufe0f ALLERGY NOTE: Aquafaba is chickpea water \u2014 NOT egg. Safe for egg allergies. However it is NOT safe for legume/chickpea allergies. Always confirm when guests ask."},
+      {name:"Calderone",price:"$15",spirit:"Tequila / Mezcal",glass:"Rocks",style:"Stirred",ice:"Large cube",garnish:"Orange twist",featured:true,
+       ingredients:[{amt:"0.75 oz",item:"Blanco Tequila"},{amt:"0.75 oz",item:"Illegal Mezcal (Joven)"},{amt:"0.5 oz",item:"Luxardo Maraschino"},{amt:"0.25 oz",item:"Licor 43"},{amt:"0.25 oz",item:"Strega"},{amt:"0.25 oz",item:"Cointreau"},{amt:"1 dash",item:"Mole Bitters"}],
+       steps:["Combine all ingredients in a mixing glass with ice.","Stir 25\u201330 seconds \u2014 six spirits need full integration.","Strain over a large cube in a rocks glass.","Express orange twist over the glass and rest on the rim."],
+       notes:"Six-spirit cocktail \u2014 complex sell. Lead with 'stirred tequila and mezcal.' If a guest asks what Strega is: Italian herbal liqueur, saffron-forward \u2014 think Chartreuse's Italian cousin."},
+      {name:"Paperback Romance",price:"$15",spirit:"Vodka",glass:"Coupe",style:"Shaken",ice:"Up",garnish:"Edible flowers",featured:false,
+       ingredients:[{amt:"1.5 oz",item:"Dripping Springs Vodka"},{amt:"0.75 oz",item:"Cocchi Bianco"},{amt:"0.5 oz",item:"Lemon Juice (fresh)"},{amt:"0.5 oz",item:"Strawberry Syrup (house)"},{amt:"0.25 oz",item:"Rose Water"},{amt:"1 spray",item:"Eucalyptus Mist (atomizer, tableside)"}],
+       steps:["Chill a coupe glass.","Add all ingredients except eucalyptus to a shaker with ice.","Shake for 12 seconds.","Double strain into the chilled coupe.","Garnish with edible flowers.","Spritz eucalyptus mist at the table \u2014 use it, guests love the theater."],
+       notes:"The eucalyptus atomizer is a tableside moment \u2014 don't skip it. Sell this as 'floral and refreshing' for guests who want 'something light and pretty.'"},
+      {name:"Valentina",price:"$15",spirit:"Tequila",glass:"Rocks",style:"Shaken",ice:"Large cube or crushed",garnish:"Cucumber ribbon + chili flake",featured:false,
+       ingredients:[{amt:"2 oz",item:"Blanco Tequila"},{amt:"0.5 oz",item:"Chareau Aloe Liqueur"},{amt:"0.75 oz",item:"Cucumber Juice (fresh pressed)"},{amt:"0.75 oz",item:"Lime Juice (fresh)"},{amt:"2 dash",item:"Calabrian Pepper Tincture"}],
+       steps:["Prep glass with chili salt rim \u2014 wet rim with lime wedge, dip in chili salt.","Add all ingredients to shaker with ice.","Shake for 12 seconds.","Strain over ice in the prepped rocks glass.","Garnish with cucumber ribbon and a pinch of chili flake."],
+       notes:"Spice level varies by how heavy-handed you go with the Calabrian tincture. Ask the guest if they like heat before you build. Good rec for 'not-too-sweet margarita alternative.'"},
+      {name:"Perla Rosa Spritz",price:"$14",spirit:"Gin",glass:"Wine glass",style:"Built",ice:"Large cube",garnish:"Grapefruit slice + mint sprig",featured:false,
+       ingredients:[{amt:"1.5 oz",item:"Cocchi Rosa"},{amt:"0.5 oz",item:"Citadelle Gin"},{amt:"0.75 oz",item:"Watermelon Juice (fresh)"},{amt:"0.5 oz",item:"Lemon Juice"},{amt:"0.25 oz",item:"Simple Syrup"},{amt:"Top",item:"Prosecco (pour slowly down the side)"},{amt:"Splash",item:"Mineral Water"}],
+       steps:["Add all base ingredients (except Prosecco and mineral water) to wine glass over a large cube.","Gently stir once to combine.","Top with Prosecco \u2014 pour slowly down the inside of the glass to preserve bubbles.","Add a splash of mineral water.","Garnish with grapefruit slice and mint sprig."],
+       notes:"Low ABV and effervescent. Great for guests who want 'something light and bubbly.' Good option for early service or people who are pacing themselves."},
+      {name:"Gentian Gentleman",price:"$15",spirit:"Gin",glass:"Highball or large rocks",style:"Built",ice:"Spear or large cube",garnish:"Thyme sprig + fig slice",featured:false,
+       ingredients:[{amt:"1 oz",item:"London Dry Gin"},{amt:"0.75 oz",item:"Fino Sherry"},{amt:"0.5 oz",item:"Salers Aperitif"},{amt:"0.25 oz",item:"White Balsamic Vinegar"},{amt:"0.25 oz",item:"White Fig Syrup (house)"},{amt:"2 leaves",item:"Fresh Basil"},{amt:"1 sprig",item:"Thyme"},{amt:"Top",item:"Mediterranean Tonic"}],
+       steps:["Gently muddle basil and thyme in the base of the glass \u2014 light press only.","Add gin, sherry, Salers, white balsamic, and fig syrup over ice.","Stir gently 3\u20134 times.","Top with Mediterranean tonic, pour slowly.","Garnish with fresh thyme sprig and fig slice."],
+       notes:"Salers is a French alpine aperitif \u2014 if guests ask: 'think of it like a more floral Campari.' Lower ABV, very approachable for wine drinkers."},
+      {name:"Q&A",price:"$13",spirit:"Mezcal",glass:"Rocks",style:"Built / Stirred",ice:"Large cube",garnish:"Orange wheel + mint",featured:false,
+       ingredients:[{amt:"1 oz",item:"Del Maguey Vida Mezcal"},{amt:"0.75 oz",item:"Select Aperitivo"},{amt:"0.5 oz",item:"Mint Amaro (Branca Menta or similar)"},{amt:"0.5 oz",item:"Ginger Syrup"},{amt:"0.75 oz",item:"Lemon Juice"},{amt:"Expressed",item:"Orange peel"}],
+       steps:["Add all ingredients to a rocks glass over a large cube.","Stir 6\u20138 times to integrate.","Express orange peel over the glass, run around the rim \u2014 discard or rest on edge.","Garnish with orange wheel and fresh mint sprig."],
+       notes:"Most accessible mezcal cocktail on the menu. Good entry point for 'mezcal curious' guests \u2014 approachable and refreshing. Our cheapest cocktail and a solid sessionable option."}
+    ],
+    classics:[
+      {name:"Negroni",price:"Market",spirit:"Gin",glass:"Rocks",style:"Stirred",ice:"Large cube",garnish:"Orange twist",featured:false,
+       ingredients:[{amt:"1 oz",item:"Gin (Ford's or Plymouth)"},{amt:"1 oz",item:"Campari"},{amt:"1 oz",item:"Sweet Vermouth (Cocchi Torino)"}],
+       steps:["Combine all ingredients in a mixing glass with ice.","Stir for 20 seconds.","Strain over a large cube in a rocks glass.","Express orange twist, run it around the rim, place on top."],
+       notes:"Equal parts. Always. Guest wants it sweeter? Try a Boulevardier (sub bourbon). Wants more bitter? Go Campari-forward."},
+      {name:"Margarita",price:"Market",spirit:"Tequila",glass:"Rocks or coupe",style:"Shaken",ice:"Rocks or up",garnish:"Lime wheel + salt rim (optional)",featured:false,
+       ingredients:[{amt:"2 oz",item:"Blanco Tequila (Arette or El Tesoro)"},{amt:"0.75 oz",item:"Cointreau"},{amt:"1 oz",item:"Lime Juice (fresh only)"},{amt:"0.25 oz",item:"Agave Syrup"}],
+       steps:["If salt rim requested: wet rim with lime wedge, dip in salt.","Combine all ingredients in shaker with ice.","Shake hard for 12 seconds.","Strain over ice in rocks glass, or up into a coupe.","Garnish with lime wheel."],
+       notes:"Fresh lime only \u2014 if you're reaching for the bottle, stop. Adjust sweetness with agave. Always ask: rocks or up, salt or no salt."},
+      {name:"Whiskey Sour",price:"Market",spirit:"Bourbon",glass:"Rocks or coupe",style:"Shaken",ice:"Rocks or up",garnish:"Cherry + orange slice",featured:false,
+       ingredients:[{amt:"2 oz",item:"Bourbon (Eagle Rare or Woodford)"},{amt:"0.75 oz",item:"Lemon Juice (fresh)"},{amt:"0.75 oz",item:"Simple Syrup"},{amt:"0.5 oz",item:"Egg White \u2014 or Aquafaba for vegan/egg-free"}],
+       steps:["Dry shake all ingredients without ice for 8 seconds to emulsify.","Add ice and shake hard for 12 seconds.","Strain into glass.","Garnish with cherry and orange slice."],
+       notes:"Always offer aquafaba as an egg-free vegan option \u2014 it performs the same. Aquafaba is chickpea water, NOT egg."}
+    ]
+  },
+  quickRef:{
+    cocktails:[
+      {name:"Old Fashioned",price:"$14"},{name:"Cursedly Fashionable",price:"$15"},
+      {name:"Butterfly Valley",price:"$15"},{name:"Match Point",price:"$14"},
+      {name:"Calderone",price:"$15"},{name:"Paperback Romance",price:"$15"},
+      {name:"Valentina",price:"$15"},{name:"Perla Rosa Spritz",price:"$14"},
+      {name:"Gentian Gentleman",price:"$15"},{name:"Q&A",price:"$13"}
+    ],
+    beer:{groups:[
+      {label:"Draft",items:[{name:"Peroni",price:"$8"},{name:"Brotherwell Seasonal",price:"$8"}]},
+      {label:"Bottles & Cans",items:[{name:"Bridge St Wit",price:"$7"},{name:"Yellow Rose IPA",price:"$7"},{name:"Shiner Bock",price:"$7"},{name:"Modelo",price:"$7"},{name:"Miller High Life",price:"$6"},{name:"Michelob Ultra",price:"$6"},{name:"Austin Eastciders Dry",price:"$8"}]}
+    ]},
+    spirits:{groups:[
+      {label:"Bourbon",items:[{name:"Old Grand Dad Bonded",price:"$8"},{name:"Buffalo Trace",price:"$10"},{name:"Maker's Mark",price:"$10"},{name:"Eagle Rare",price:"$12"},{name:"Elijah Craig 1789",price:"$12"},{name:"Woodford Reserve",price:"$12"},{name:"Weller Special Reserve",price:"$16"},{name:"Weller 12 Year",price:"$18"},{name:"Weller Full Proof",price:"$22"},{name:"Blanton's Original",price:"$24"},{name:"Weller Antique 107",price:"$25"},{name:"Elmer T Lee",price:"$28"},{name:"Stagg Jr",price:"$28"},{name:"Booker's",price:"$35"},{name:"Elijah Craig 18 Year",price:"$48"},{name:"Blanton's Gold",price:"$55"},{name:"Blanton's SFTB",price:"$60"},{name:"Weller Single Barrel",price:"$60"},{name:"Old Fitzgerald 10 Year",price:"$75"}]},
+      {label:"Rye & Whiskey",items:[{name:"Rittenhouse Bonded",price:"$8"},{name:"Crown Royal",price:"$9"},{name:"Jack Daniels",price:"$9"},{name:"Sazerac Rye",price:"$10"},{name:"Balcones Baby Blue",price:"$11"},{name:"Balcones Lineage",price:"$12"},{name:"Whistlepig Piggyback 6yr",price:"$12"},{name:"Balcones BIB Rye",price:"$13"},{name:"Michter's Single Barrel Rye",price:"$15"},{name:"Balcones '1' Single Malt",price:"$16"},{name:"Angel's Envy Rye",price:"$23"},{name:"E.H. Taylor Rye",price:"$40"},{name:"Whistlepig 12yr Old World",price:"$50"},{name:"High West Midwinter Night's Dram",price:"$55"},{name:"Thomas H. Handy Sazerac",price:"$65"}]},
+      {label:"Scotch & Irish",items:[{name:"Famous Grouse",price:"$8"},{name:"Jameson",price:"$9"},{name:"Glenlivet 12yr",price:"$15"},{name:"Laphroaig 10yr",price:"$16"},{name:"Highland Park 12yr",price:"$17"},{name:"Redbreast 12yr",price:"$18"},{name:"Caol Ila 12yr",price:"$26"},{name:"Redbreast 15yr",price:"$36"},{name:"Lagavulin 16yr",price:"$34"},{name:"Macallan 15yr Double Cask",price:"$60"},{name:"Macallan Amber Meadow",price:"$60"}]},
+      {label:"Tequila & Mezcal",items:[{name:"Arette Blanco",price:"$8"},{name:"Arette Reposado",price:"$10"},{name:"Ilegal Joven",price:"$10"},{name:"Del Maguey Vida",price:"$10"},{name:"Lalo Blanco",price:"$12"},{name:"El Tesoro Blanco",price:"$15"},{name:"Ocho Plata",price:"$15"},{name:"Lost Explorer Espadin",price:"$15"},{name:"Ocho Reposado",price:"$18"},{name:"El Tesoro Reposado",price:"$20"},{name:"Fortaleza Blanco",price:"$22"},{name:"Del Maguey SD Albareadas",price:"$22"},{name:"Del Maguey Chichicapa",price:"$22"},{name:"Fortaleza Reposado",price:"$25"},{name:"Jose Cuervo Reserva Extra Anejo",price:"$80"}]},
+      {label:"Gin",items:[{name:"Citadelle",price:"$8"},{name:"Ford's",price:"$8"},{name:"Roku",price:"$9"},{name:"Plymouth",price:"$10"},{name:"St. George Terroir",price:"$10"},{name:"Tanqueray Ten",price:"$10"},{name:"Drumshanbo Sardinian Citrus",price:"$11"},{name:"Hendrick's",price:"$11"},{name:"The Botanist",price:"$12"},{name:"Empress",price:"$13"},{name:"Monkey 47",price:"$20"}]},
+      {label:"Rum",items:[{name:"Planteray 3 Star White",price:"$8"},{name:"Planteray Original Dark",price:"$8"},{name:"Probitas Foursquare White",price:"$8"},{name:"Smith & Cross",price:"$9"},{name:"Planteray 5 Year",price:"$11"},{name:"Planteray Coconut",price:"$11"},{name:"Planteray Pineapple",price:"$11"}]},
+      {label:"Vodka",items:[{name:"Tito's",price:"$8"},{name:"Chopin",price:"$11"},{name:"Ketel One",price:"$11"},{name:"Grey Goose",price:"$12"},{name:"Belvedere",price:"$13"}]},
+      {label:"Brandy & Cognac",items:[{name:"Brandy Sainte Louise",price:"$10"},{name:"Camus Cognac",price:"$13"},{name:"Pierre Ferrand 1840",price:"$13"},{name:"Cardenal Mendoza",price:"$18"},{name:"Grappa Di Sassicaia",price:"$54"}]}
+    ]}
+  }
+};
+/*DATA_END*/
+
+let editMode=false,activeCard=null,editingTabId=null,editingIndex=null,activeTabId=barData.tabs[0].id,editSteps=[],pinEntry='';
+
+function render(){renderTabs();renderSections();}
+function renderTabs(){document.getElementById('tabNav').innerHTML=barData.tabs.map(t=>`<button class="tab-btn${t.id===activeTabId?' active':''}" onclick="switchTab('${t.id}')">${t.label}</button>`).join('');}
+function renderSections(){document.getElementById('sectionsContainer').innerHTML=barData.tabs.map(t=>t.isRef?renderQuickRef(t):renderRecipeSection(t)).join('');}
+
+function renderRecipeSection(tab){
+  const isActive=tab.id===activeTabId;
+  const recipes=barData.recipes[tab.id]||[];
+  const cards=recipes.map((r,i)=>renderCard(r,i,tab.id)).join('');
+  const addBtn=`<button class="add-card-btn" onclick="openNewCard('${tab.id}')"><span>+</span> Add Recipe</button>`;
+  return `<div class="section${isActive?' active':''}" id="tab-${tab.id}">
+    <div class="section-title">${tab.subtitle}</div>
+    <div class="search-bar"><span class="search-icon">&#x2315;</span><input type="text" placeholder="Search by name, spirit, or ingredient..." oninput="filterRecipes(this.value,'${tab.id}')"></div>
+    <div class="recipe-grid" id="grid-${tab.id}">${cards}${addBtn}</div></div>`;
+}
+
+function renderCard(r,i,tabId){
+  const tags=[r.spirit?`<span class="meta-tag spirit">${r.spirit}</span>`:'',r.glass?`<span class="meta-tag glass">${r.glass}</span>`:'',r.style?`<span class="meta-tag style">${r.style}</span>`:''].join('');
+  const ingPreview=r.ingredients.map(x=>x.item).join(' \u00b7 ');
+  return `<div class="recipe-card${r.featured?' featured':''}" onclick="handleCardClick(this,'${tabId}',${i})" data-tab="${tabId}" data-index="${i}" data-name="${r.name.toLowerCase()}" data-spirit="${(r.spirit||'').toLowerCase()}" data-ing="${r.ingredients.map(x=>x.item).join(' ').toLowerCase()}">
+    <div class="card-edit-actions">
+      <button class="btn-edit-card" onclick="event.stopPropagation();openEditCard('${tabId}',${i})">&#x270E;</button>
+      <button class="btn-del-card" onclick="event.stopPropagation();deleteCard('${tabId}',${i})">&#x1F5D1;</button>
+    </div>
+    <div class="card-top"><div class="card-name">${r.name}</div><div class="card-price">${r.price}</div></div>
+    <div class="card-meta">${tags}</div>
+    <div class="card-ing-preview">${ingPreview}</div>
+    <div class="card-footer"><span class="card-footer-arrow">&#x203A;</span><span>${r.steps.length} build steps \u2014 tap for full recipe</span></div>
+  </div>`;
+}
+
+function renderQuickRef(tab){
+  const isActive=tab.id===activeTabId;
+  const ref=barData.quickRef;
+  const ctHtml=ref.cocktails.map(c=>`<div class="qr-item"><div class="qr-name">${c.name}</div><div class="qr-price">${c.price}</div></div>`).join('');
+  const beerHtml=ref.beer.groups.map(g=>`<div class="qr-group-label">${g.label}</div><div class="qr-grid" style="margin-bottom:16px;">${g.items.map(x=>`<div class="qr-item"><div class="qr-name">${x.name}</div><div class="qr-price">${x.price}</div></div>`).join('')}</div>`).join('');
+  const spiritsHtml=ref.spirits.groups.map(g=>`<div class="qr-group-label">${g.label}</div><div class="qr-grid" style="margin-bottom:16px;">${g.items.map(x=>`<div class="qr-item"><div class="qr-name">${x.name}</div><div class="qr-price">${x.price}</div></div>`).join('')}</div>`).join('');
+  return `<div class="section${isActive?' active':''}" id="tab-${tab.id}">
+    <div class="section-title">${tab.subtitle}</div>
+    <div class="qr-section-heading">Signature Cocktails</div><div class="qr-grid" style="margin-bottom:32px;">${ctHtml}</div>
+    <div class="qr-section-heading">Beer</div>${beerHtml}
+    <div class="qr-section-heading">Spirits \u2014 1.5 oz pours</div>${spiritsHtml}</div>`;
+}
+
+function filterRecipes(query,tabId){
+  const q=query.toLowerCase().trim();
+  const grid=document.getElementById('grid-'+tabId);
+  if(!grid)return;
+  let visible=0;
+  grid.querySelectorAll('.recipe-card').forEach(card=>{
+    const hit=!q||(card.dataset.name||'').includes(q)||(card.dataset.spirit||'').includes(q)||(card.dataset.ing||'').includes(q);
+    card.style.display=hit?'':'none';
+    if(hit)visible++;
+  });
+  const old=grid.querySelector('.no-results');if(old)old.remove();
+  if(!visible&&q){const el=document.createElement('div');el.className='no-results';el.textContent='No results for "'+query+'"';grid.appendChild(el);}
+}
+
+function switchTab(id){activeTabId=id;closePanel();render();}
+
+function handleCardClick(card,tabId,index){
+  if(editMode)return;
+  const r=barData.recipes[tabId]&&barData.recipes[tabId][index];
+  if(!r)return;
+  openPanel(card,r,tabId);
+}
+
+function openPanel(cardEl,r,category){
+  if(activeCard)activeCard.classList.remove('active-card');
+  activeCard=cardEl;cardEl.classList.add('active-card');
+  const tabLabel=barData.tabs.find(t=>t.id===category)?.label||'';
+  document.getElementById('panelCategory').textContent=tabLabel;
+  document.getElementById('panelName').textContent=r.name;
+  document.getElementById('panelPrice').textContent=r.price;
+  document.getElementById('panelTags').innerHTML=[r.spirit?`<span class="meta-tag spirit">${r.spirit}</span>`:'',r.glass?`<span class="meta-tag glass">${r.glass}</span>`:'',r.style?`<span class="meta-tag style">${r.style}</span>`:''].join('');
+  document.getElementById('panelIngredients').innerHTML=r.ingredients.map(ing=>`<div class="ingredient-tag"><span class="amt">${ing.amt}</span>${ing.item}</div>`).join('');
+  document.getElementById('panelSteps').innerHTML=r.steps.map((s,i)=>`<div class="build-step"><div class="step-num">${i+1}</div><div class="step-text">${s}</div></div>`).join('');
+  document.getElementById('panelGlass').textContent=r.glass||'\u2014';
+  document.getElementById('panelGarnish').textContent=r.garnish||'\u2014';
+  document.getElementById('panelIce').textContent=r.ice||'\u2014';
+  const notesEl=document.getElementById('panelNotes');
+  notesEl.textContent=r.notes||'No staff notes yet.';
+  notesEl.className='panel-notes'+(r.notes?' has-note':'');
+  document.getElementById('slidePanel').classList.add('open');
+  document.getElementById('overlay').classList.add('visible');
+  document.getElementById('mainContainer').classList.add('panel-open');
+}
+
+function closePanel(){
+  document.getElementById('slidePanel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('mainContainer').classList.remove('panel-open');
+  if(activeCard){activeCard.classList.remove('active-card');activeCard=null;}
+}
+
+function requestEdit(){
+  if(editMode){deactivateEditMode();return;}
+  pinEntry='';updatePinDots();
+  document.getElementById('pinError').textContent='';
+  document.getElementById('pinOverlay').classList.add('open');
+}
+
+function pinPress(digit){
+  if(pinEntry.length>=4)return;
+  pinEntry+=digit;updatePinDots();
+  if(pinEntry.length===4)setTimeout(checkPin,150);
+}
+
+function pinClear(){pinEntry=pinEntry.slice(0,-1);updatePinDots();}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinEntry.length);
+}
+
+function checkPin(){
+  if(pinEntry===barData.editPin){document.getElementById('pinOverlay').classList.remove('open');activateEditMode();}
+  else{document.getElementById('pinError').textContent='Incorrect PIN';pinEntry='';updatePinDots();}
+}
+
+function activateEditMode(){
+  editMode=true;document.body.classList.add('edit-mode');
+  const btn=document.getElementById('editToggle'),hint=document.getElementById('editHint');
+  btn.classList.add('active');btn.textContent='\u2713 Done';hint.classList.add('visible');closePanel();
+}
+
+function deactivateEditMode(){
+  editMode=false;document.body.classList.remove('edit-mode');
+  const btn=document.getElementById('editToggle'),hint=document.getElementById('editHint');
+  btn.classList.remove('active');btn.textContent='\u270E Edit';hint.classList.remove('visible');
+}
+
+function renderStepsEditor(){
+  document.getElementById('stepsEditor').innerHTML=editSteps.map((s,i)=>`<div class="step-editor-row"><div class="step-num-badge">${i+1}</div><input type="text" value="${s.replace(/"/g,'&quot;')}" oninput="editSteps[${i}]=this.value" placeholder="Describe this step..."><button class="btn-del-step" type="button" onclick="removeStep(${i})">&#x2715;</button></div>`).join('');
+}
+
+function addStep(){editSteps.push('');renderStepsEditor();const inp=document.getElementById('stepsEditor').querySelectorAll('input');if(inp.length)inp[inp.length-1].focus();}
+function removeStep(i){editSteps.splice(i,1);renderStepsEditor();}
+
+function populateSectionSelect(){
+  document.getElementById('fSection').innerHTML=Object.keys(barData.recipes).map(k=>`<option value="${k}">${k.charAt(0).toUpperCase()+k.slice(1)}</option>`).join('');
+}
+
+function openEditCard(tabId,index){
+  editingTabId=tabId;editingIndex=index;
+  const r=barData.recipes[tabId][index];
+  populateSectionSelect();
+  document.getElementById('modalTitle').textContent='Edit Recipe';
+  document.getElementById('fName').value=r.name;document.getElementById('fPrice').value=r.price;
+  document.getElementById('fSpirit').value=r.spirit||'';document.getElementById('fGlass').value=r.glass||'';
+  document.getElementById('fStyle').value=r.style||'';document.getElementById('fIce').value=r.ice||'';
+  document.getElementById('fGarnish').value=r.garnish||'';
+  document.getElementById('fIngredients').value=r.ingredients.map(ing=>`${ing.amt} ${ing.item}`).join('\n');
+  document.getElementById('fNotes').value=r.notes||'';
+  document.getElementById('fFeatured').value=r.featured?'featured':'';
+  document.getElementById('fSection').value=tabId;
+  editSteps=[...r.steps];renderStepsEditor();
+  document.getElementById('editModal').classList.add('open');
+}
+
+function openNewCard(tabId){
+  editingTabId=tabId;editingIndex=null;populateSectionSelect();
+  document.getElementById('modalTitle').textContent='Add New Recipe';
+  ['fName','fPrice','fSpirit','fGlass','fStyle','fIce','fGarnish','fIngredients','fNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fFeatured').value='';document.getElementById('fSection').value=tabId;
+  editSteps=[''];renderStepsEditor();document.getElementById('editModal').classList.add('open');
+}
+
+function parseIngredients(raw){
+  return raw.split('\n').map(line=>{
+    line=line.trim();if(!line)return null;
+    const m=line.match(/^([\d./]+\s*(oz|ml|cl|dash|dashes|tsp|tbsp|barspoon|bsp|top|splash|pinch|spray|expressed|drops?|leaves?|sprigs?|shots?|parts?|rinse)\b\.?\s*)(.+)/i);
+    return m?{amt:m[1].trim(),item:m[3].trim()}:{amt:'',item:line};
+  }).filter(Boolean);
+}
+
+function saveCard(){
+  const targetTab=document.getElementById('fSection').value;
+  const r={name:document.getElementById('fName').value.trim()||'New Recipe',price:document.getElementById('fPrice').value.trim()||'',spirit:document.getElementById('fSpirit').value.trim(),glass:document.getElementById('fGlass').value.trim(),style:document.getElementById('fStyle').value.trim(),ice:document.getElementById('fIce').value.trim(),garnish:document.getElementById('fGarnish').value.trim(),ingredients:parseIngredients(document.getElementById('fIngredients').value),steps:editSteps.filter(s=>s.trim()),notes:document.getElementById('fNotes').value.trim(),featured:document.getElementById('fFeatured').value==='featured'};
+  if(editingIndex===null){if(!barData.recipes[targetTab])barData.recipes[targetTab]=[];barData.recipes[targetTab].push(r);}
+  else if(targetTab!==editingTabId){barData.recipes[editingTabId].splice(editingIndex,1);if(!barData.recipes[targetTab])barData.recipes[targetTab]=[];barData.recipes[targetTab].push(r);}
+  else barData.recipes[editingTabId][editingIndex]=r;
+  closeModal();render();
+}
+
+function deleteCard(tabId,index){
+  if(!confirm('Remove "'+barData.recipes[tabId][index].name+'"?'))return;
+  barData.recipes[tabId].splice(index,1);render();
+}
+
+function closeModal(){document.getElementById('editModal').classList.remove('open');}
+
+function exportMenu(){
+  const src=document.documentElement.outerHTML;
+  const START='/*DATA_START*/';const END='/*DATA_END*/';
+  const si=src.indexOf(START);const ei=src.indexOf(END);
+  if(si===-1||ei===-1){alert('Export markers missing.');return;}
+  const updated=src.slice(0,si+START.length)+'\nlet barData = '+JSON.stringify(barData,null,2)+';\n'+src.slice(ei);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([updated],{type:'text/html'}));a.download='bar-recipes.html';a.click();URL.revokeObjectURL(a.href);
+}
+
+render();
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanel();closeModal();document.getElementById('pinOverlay').classList.remove('open');}});
+</script>
+</body>
+</html>
